@@ -1,65 +1,456 @@
-import Image from "next/image";
+"use client";
+import { useState, useEffect } from "react";
+
+const SKBIDI_ASCII = `
+ ███████╗██╗  ██╗██████╗ ██╗██████╗ ██╗    ██╗  ██╗██╗   ██╗███████╗
+ ██╔════╝██║ ██╔╝██╔══██╗██║██╔══██╗██║    ╚██╗██╔╝╚██╗ ██╔╝╚══███╔╝
+ ███████╗█████╔╝ ██████╔╝██║██║  ██║██║     ╚███╔╝  ╚████╔╝   ███╔╝ 
+ ╚════██║██╔═██╗ ██╔══██╗██║██║  ██║██║     ██╔██╗   ╚██╔╝   ███╔╝  
+ ███████║██║  ██╗██████╔╝██║██████╔╝██║    ██╔╝ ██╗   ██║   ███████╗
+ ╚══════╝╚═╝  ╚═╝╚═════╝ ╚═╝╚═════╝ ╚═╝    ╚═╝  ╚═╝   ╚═╝   ╚══════╝`;
+
+const SUBTITLE_ASCII = `
+ ██████╗ ██████╗  █████╗ ██╗███╗   ██╗██████╗  ██████╗ ████████╗
+ ██╔══██╗██╔══██╗██╔══██╗██║████╗  ██║██╔══██╗██╔═══██╗╚══██╔══╝
+ ██████╔╝██████╔╝███████║██║██╔██╗ ██║██████╔╝██║   ██║   ██║   
+ ██╔══██╗██╔══██╗██╔══██║██║██║╚██╗██║██╔══██╗██║   ██║   ██║   
+ ██████╔╝██║  ██║██║  ██║██║██║ ╚████║██║  ██║╚██████╔╝   ██║   
+ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝ ╚═════╝    ╚═╝   
+
+ ██╗   ██╗██████╗ ██╗      ██████╗ ██████╗ ███╗   ██╗██╗   ██╗███████╗██████╗ ████████╗███████╗██████╗ 
+ ██║   ██║██╔══██╗██║     ██╔════╝██╔═══██╗████╗  ██║██║   ██║██╔════╝██╔══██╗╚══██╔══╝██╔════╝██╔══██╗
+ ██║   ██║██████╔╝██║     ██║     ██║   ██║██╔██╗ ██║██║   ██║█████╗  ██████╔╝   ██║   █████╗  ██████╔╝
+ ██║   ██║██╔══██╗██║     ██║     ██║   ██║██║╚██╗██║╚██╗ ██╔╝██╔══╝  ██╔══██╗   ██║   ██╔══╝  ██╔══██╗
+ ╚██████╔╝██║  ██║███████╗╚██████╗╚██████╔╝██║ ╚████║ ╚████╔╝ ███████╗██║  ██║   ██║   ███████╗██║  ██║
+  ╚═════╝ ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═════╝╚═╝  ╚═══╝  ╚═══╝  ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝`;
+
+const SKULL_ASCII = `
+    ░░░░░░░░░░░░░░░░░
+    ░░┌─────────────┐░░
+    ░░│  ██     ██  │░░
+    ░░│  ██     ██  │░░
+    ░░│    ·····    │░░
+    ░░│  ─────────  │░░
+    ░░│  ██  █  ██  │░░
+    ░░└─────────────┘░░
+    ░░░░░░░░░░░░░░░░░`;
+
+const DIVIDER = `░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░`;
 
 export default function Home() {
+  const [url, setUrl] = useState("");
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [visitorCount] = useState(
+    () => Math.floor(Math.random() * 900000) + 100000,
+  );
+  const [colorIndex, setColorIndex] = useState(0);
+
+  const titleColors = ["#ff6b35", "#ff00ff", "#00d4ff", "#00ff41", "#ffff00"];
+
+  useEffect(() => {
+    setMounted(true);
+    const interval = setInterval(() => {
+      setColorIndex((i) => (i + 1) % titleColors.length);
+    }, 800);
+    return () => clearInterval(interval);
+  }, []);
+
+  async function shorten() {
+    if (!url) return;
+    setLoading(true);
+    setResult(null);
+    try {
+      const res = await fetch("api/shorten", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      setResult(data.shortUrl);
+    } catch (e) {
+      alert("ERROR: Connection to mainframe failed.");
+    }
+    setLoading(false);
+  }
+
+  function copy() {
+    navigator.clipboard.writeText(result);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  if (!mounted) return null;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "#0a0a0a",
+        color: "#e8e8e8",
+        fontFamily: "'Courier New', Courier, monospace",
+        padding: "16px",
+        overflowX: "hidden",
+      }}
+    >
+      {/* ASCII HEADER — SKBIDI.XYZ */}
+      <div style={{ textAlign: "center", marginBottom: 8, overflowX: "auto" }}>
+        <pre
+          style={{
+            display: "inline-block",
+            fontSize: "clamp(4px, 1vw, 11px)",
+            lineHeight: 1.2,
+            color: titleColors[colorIndex],
+            transition: "color 0.4s ease",
+            margin: 0,
+            textAlign: "left",
+          }}
+        >
+          {SKBIDI_ASCII}
+        </pre>
+      </div>
+
+      {/* ASCII SUBTITLE */}
+      <div style={{ textAlign: "center", marginBottom: 4, overflowX: "auto" }}>
+        <pre
+          style={{
+            display: "inline-block",
+            fontSize: "clamp(3px, 0.6vw, 7px)",
+            lineHeight: 1.2,
+            color: "#ff00ff",
+            margin: 0,
+            textAlign: "left",
+            opacity: 0.85,
+          }}
+        >
+          {SUBTITLE_ASCII}
+        </pre>
+      </div>
+
+      {/* tagline */}
+      <div style={{ textAlign: "center", marginBottom: 4 }}>
+        <span style={{ color: "#00ff41", fontSize: 13 }}>
+          [ make any link look extremely suspicious ]
+        </span>
+      </div>
+
+      {/* stats bar */}
+      <div
+        style={{
+          textAlign: "center",
+          marginBottom: 16,
+          fontSize: 11,
+          color: "#666",
+        }}
+      >
+        <span style={{ color: "#00d4ff" }}>visitors:</span>{" "}
+        {visitorCount.toLocaleString()}
+        &nbsp;|&nbsp;
+        <span style={{ color: "#00ff41" }}>status:</span> ONLINE &nbsp;|&nbsp;
+        <span style={{ color: "#ff6b35" }}>threats detected:</span> 47
+      </div>
+
+      {/* colored divider */}
+      <div
+        style={{ textAlign: "center", marginBottom: 24, overflowX: "hidden" }}
+      >
+        <pre
+          style={{
+            fontSize: 10,
+            margin: 0,
+            background:
+              "linear-gradient(90deg, #ff6b35, #ff00ff, #00d4ff, #00ff41, #ffff00)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            overflow: "hidden",
+          }}
+        >
+          {DIVIDER}
+        </pre>
+      </div>
+
+      {/* main content — 2 col on desktop, 1 col on mobile */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+          gap: 24,
+          maxWidth: 900,
+          margin: "0 auto",
+        }}
+      >
+        {/* LEFT — main tool */}
+        <div
+          style={{
+            border: "1px solid #333",
+            padding: 20,
+            background: "#111",
+          }}
+        >
+          {/* box header */}
+          <div
+            style={{
+              borderBottom: "1px solid #333",
+              paddingBottom: 8,
+              marginBottom: 16,
+              display: "flex",
+              justifyContent: "space-between",
+            }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            <span style={{ color: "#00d4ff", fontSize: 12 }}>
+              ┌─[ SUSPICIFIER v3.0 ]
+            </span>
+            <span style={{ color: "#333", fontSize: 12 }}>registered ✓</span>
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <label
+              style={{
+                fontSize: 11,
+                color: "#666",
+                display: "block",
+                marginBottom: 6,
+              }}
+            >
+              &gt; enter target url:
+            </label>
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && shorten()}
+              placeholder="google.com"
+              style={{
+                width: "100%",
+                background: "#0a0a0a",
+                border: "1px solid #333",
+                borderBottom: "2px solid #00d4ff",
+                color: "#e8e8e8",
+                padding: "10px 12px",
+                fontFamily: "'Courier New', monospace",
+                fontSize: 14,
+                boxSizing: "border-box",
+                outline: "none",
+              }}
+              onFocus={(e) => (e.target.style.borderColor = "#00d4ff")}
+              onBlur={(e) => (e.target.style.borderBottomColor = "#00d4ff")}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          <button
+            onClick={shorten}
+            disabled={loading}
+            style={{
+              width: "100%",
+              background: loading ? "#1a1a1a" : "#0a0a0a",
+              border: "1px solid",
+              borderColor: loading ? "#333" : "#00ff41",
+              color: loading ? "#444" : "#00ff41",
+              padding: "12px",
+              fontFamily: "'Courier New', monospace",
+              fontSize: 14,
+              cursor: loading ? "wait" : "pointer",
+              letterSpacing: 2,
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.target.style.background = "#00ff41";
+                e.target.style.color = "#0a0a0a";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = "#0a0a0a";
+              e.target.style.color = loading ? "#444" : "#00ff41";
+            }}
           >
-            Documentation
-          </a>
+            {loading ? "[ GENERATING... ]" : "[ MAKE IT SUS ]"}
+          </button>
+
+          {result && (
+            <div style={{ marginTop: 20 }}>
+              <div
+                style={{
+                  borderLeft: "3px solid #00ff41",
+                  paddingLeft: 12,
+                  marginBottom: 12,
+                }}
+              >
+                <div style={{ fontSize: 10, color: "#666", marginBottom: 6 }}>
+                  &gt; suspicification complete. send to victim:
+                </div>
+                <div
+                  style={{
+                    color: "#00d4ff",
+                    fontSize: 13,
+                    wordBreak: "break-all",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {result}
+                </div>
+              </div>
+              <button
+                onClick={copy}
+                style={{
+                  background: copied ? "#00ff41" : "#0a0a0a",
+                  border: "1px solid #00ff41",
+                  color: copied ? "#0a0a0a" : "#00ff41",
+                  padding: "8px 20px",
+                  fontFamily: "'Courier New', monospace",
+                  fontSize: 12,
+                  cursor: "pointer",
+                  letterSpacing: 1,
+                  transition: "all 0.15s",
+                }}
+              >
+                {copied ? "[ COPIED ✓ ]" : "[ COPY LINK ]"}
+              </button>
+            </div>
+          )}
         </div>
-      </main>
-    </div>
+
+        {/* RIGHT — ASCII art + info */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* skull */}
+          <div
+            style={{
+              border: "1px solid #333",
+              padding: 16,
+              background: "#111",
+              textAlign: "center",
+            }}
+          >
+            <pre
+              style={{
+                fontSize: 12,
+                margin: 0,
+                lineHeight: 1.4,
+                color: "#ff6b35",
+                display: "inline-block",
+                textAlign: "left",
+              }}
+            >
+              {SKULL_ASCII}
+            </pre>
+            <div style={{ marginTop: 8, fontSize: 11, color: "#ff6b35" }}>
+              ⚠ WARNING: 100% SAFE ⚠
+            </div>
+          </div>
+
+          {/* how it works */}
+          <div
+            style={{
+              border: "1px solid #333",
+              padding: 16,
+              background: "#111",
+              fontSize: 12,
+              lineHeight: 1.8,
+            }}
+          >
+            <div style={{ color: "#ff00ff", marginBottom: 8, fontSize: 11 }}>
+              ┌─[ HOW IT WORKS ]
+            </div>
+            <div style={{ color: "#666" }}>
+              <span style={{ color: "#00d4ff" }}>01.</span> paste any url
+            </div>
+            <div style={{ color: "#666" }}>
+              <span style={{ color: "#00d4ff" }}>02.</span> we make it look
+              extremely suspicious
+            </div>
+            <div style={{ color: "#666" }}>
+              <span style={{ color: "#00d4ff" }}>03.</span> send to unsuspecting
+              victim
+            </div>
+            <div style={{ color: "#666" }}>
+              <span style={{ color: "#00d4ff" }}>04.</span> they panic. you
+              laugh. link works fine.
+            </div>
+          </div>
+
+          {/* example links */}
+          <div
+            style={{
+              border: "1px solid #333",
+              padding: 16,
+              background: "#111",
+              fontSize: 11,
+            }}
+          >
+            <div style={{ color: "#ff00ff", marginBottom: 8 }}>
+              ┌─[ SAMPLE OUTPUTS ]
+            </div>
+            {[
+              {
+                color: "#ff6b35",
+                text: "skbidi.xyz/npc-80e/touch-grass?skill_issue=true",
+              },
+              {
+                color: "#00ff41",
+                text: "skbidi.xyz/rizz-5f3/gyatt/results?score=over9000",
+              },
+              {
+                color: "#00d4ff",
+                text: "skbidi.xyz/gpt-3a1/jailbreak/DAN?token=ff2c9a",
+              },
+              {
+                color: "#ff00ff",
+                text: "skbidi.xyz/free-bb2/robux/claim?amt=999999",
+              },
+            ].map((ex, i) => (
+              <div
+                key={i}
+                style={{
+                  color: ex.color,
+                  marginBottom: 4,
+                  wordBreak: "break-all",
+                }}
+              >
+                &gt; {ex.text}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* bottom divider */}
+      <div
+        style={{
+          textAlign: "center",
+          margin: "24px 0 8px",
+          overflowX: "hidden",
+        }}
+      >
+        <pre
+          style={{
+            fontSize: 10,
+            margin: 0,
+            background:
+              "linear-gradient(90deg, #00ff41, #00d4ff, #ff00ff, #ff6b35)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            overflow: "hidden",
+          }}
+        >
+          {DIVIDER}
+        </pre>
+      </div>
+
+      {/* footer */}
+      <div
+        style={{
+          textAlign: "center",
+          fontSize: 10,
+          color: "#333",
+          paddingBottom: 16,
+        }}
+      >
+        <span style={{ color: "#ff6b35" }}>skbidi.xyz</span>
+        &nbsp;·&nbsp; no data collected &nbsp;·&nbsp; no cookies &nbsp;·&nbsp;
+        yes it's free &nbsp;·&nbsp;
+        <span style={{ color: "#00ff41" }}>built for chaos</span>
+      </div>
+    </main>
   );
 }
