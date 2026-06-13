@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "skbidi.xyz — brainrot url converter",
+  title: "skbidi.xyz a brainrot url converter",
   description: "make any link look extremely suspicious",
 };
 
