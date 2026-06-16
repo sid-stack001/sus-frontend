@@ -62,17 +62,38 @@ export default function Home() {
     if (!url) return;
     setLoading(true);
     setResult(null);
+
     try {
-      const res = await fetch("api/shorten", {
+      const res = await fetch("/api/shorten", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       });
+
+      if (res.status === 429) {
+        alert("⚠ Whoa there, slow down! You've hit the limit (10 links/hour). Try again later.");
+        setLoading(false);
+        return;
+      }
+
+      if (res.status === 401) {
+        alert("⚠ Unauthorized. Something's misconfigured.");
+        setLoading(false);
+        return;
+      }
+
+      if (!res.ok) {
+        alert("⚠ Something went wrong. Try again.");
+        setLoading(false);
+        return;
+      }
+
       const data = await res.json();
       setResult(data.shortUrl);
     } catch (e) {
       alert("ERROR: Connection to mainframe failed.");
     }
+
     setLoading(false);
   }
 
