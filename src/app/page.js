@@ -43,17 +43,25 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [visitorCount] = useState(
-    () => Math.floor(Math.random() * 900000) + 100000,
-  );
+  const [linksGenerated, setLinksGenerated] = useState(0);
+  const [victimsTricked, setVictimsTricked] = useState(0);
   const [colorIndex, setColorIndex] = useState(0);
 
   const titleColors = ["#ff6b35", "#ff00ff", "#00d4ff", "#00ff41", "#ffff00"];
 
   useEffect(() => {
     setMounted(true);
+
+    fetch("/global-stats")
+      .then(res => res.json())
+      .then(data => {
+        setLinksGenerated(data.linksGenerated);
+        setVictimsTricked(data.victimsTricked);
+      })
+      .catch(() => { });
+
     const interval = setInterval(() => {
-      setColorIndex((i) => (i + 1) % titleColors.length);
+      setColorIndex(i => (i + 1) % titleColors.length);
     }, 800);
     return () => clearInterval(interval);
   }, []);
@@ -158,19 +166,12 @@ export default function Home() {
       </div>
 
       {/* stats bar */}
-      <div
-        style={{
-          textAlign: "center",
-          marginBottom: 16,
-          fontSize: 11,
-          color: "#666",
-        }}
-      >
-        <span style={{ color: "#00d4ff" }}>visitors:</span>{" "}
-        {visitorCount.toLocaleString()}
+      <div style={{ textAlign: "center", marginBottom: 16, fontSize: 11, color: "#666" }}>
+        <span style={{ color: "#00d4ff" }}>links generated:</span> {linksGenerated.toLocaleString()}
         &nbsp;|&nbsp;
-        <span style={{ color: "#00ff41" }}>status:</span> ONLINE &nbsp;|&nbsp;
-        <span style={{ color: "#ff6b35" }}>threats detected:</span> 47
+        <span style={{ color: "#00ff41" }}>status:</span> ONLINE
+        &nbsp;|&nbsp;
+        <span style={{ color: "#ff6b35" }}>victims tricked:</span> {victimsTricked.toLocaleString()}
       </div>
 
       {/* colored divider */}
